@@ -7,6 +7,11 @@ app = FastAPI(title="Demo FastAPI CI/CD", version="0.1.0")
 class Ping(BaseModel):
     message: str = "pong"
 
+
+@app.get("/")
+def root():
+    return {"message": "ok"}
+
 @app.get("/healthz")
 def healthz():
     # Endpoint para liveness probes
