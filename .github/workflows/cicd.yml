@@ -77,7 +77,7 @@ jobs:
 
       - name: Deploy Cloud Run (staging)
         run: >
-          gcloud run deploy "${{ vars.SERVICE_STAGING }}"
+          gcloud run deploy ${{ vars.SERVICE_STAGING }}
           --image="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}"
           --region="${{ vars.GCP_REGION }}"
           --platform=managed
@@ -125,7 +125,7 @@ jobs:
       - name: Deploy Cloud Run (prod)
         id: deploy_prod
         run: >
-          gcloud run deploy "${{ vars.SERVICE_PROD }}"
+          gcloud run deploy ${{ vars.SERVICE_PROD }}
           --image="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}"
           --region="${{ vars.GCP_REGION }}"
           --platform=managed
