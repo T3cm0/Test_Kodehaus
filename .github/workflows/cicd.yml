@@ -33,9 +33,8 @@ jobs:
       - name: Fast API smoke (local)
         run: |
           python -c "import fastapi, uvicorn; print('FastAPI:', fastapi.__version__)"
-          # Aquí podrías correr tests (pytest) si quieres
+          # Aquí podrías correr tests (pytest)
 
-      # ⬇️ Tag local (no usa variables de GCP)
       - name: Build container (no push)
         uses: docker/build-push-action@v6
         with:
@@ -102,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ deploy_staging ]
     environment:
-      name: production   # configura Required reviewers en Settings → Environments
+      name: production   # configura reviewers en Settings → Environments
       url: ${{ steps.prod_url.outputs.url }}
     permissions:
       contents: read
