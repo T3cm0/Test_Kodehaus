@@ -7,19 +7,18 @@ app = FastAPI(title="Demo FastAPI CI/CD", version="0.1.0")
 class Ping(BaseModel):
     message: str = "pong"
 
-
 @app.get("/")
 def root():
     return {"message": "ok"}
 
 @app.get("/healthz")
 def healthz():
-    # Endpoint para liveness probes
+    # Liveness probe
     return {"status": "ok"}
 
 @app.get("/readyz")
 def readyz():
-    # Endpoint para readiness probes (aquí podrías chequear DB, etc.)
+    # Readiness probe (aquí podrías chequear DB, cache, etc.)
     return {"ready": True}
 
 @app.get("/version")
@@ -27,10 +26,9 @@ def version():
     return {
         "app": app.title,
         "version": app.version,
-        "env": os.getenv("APP_ENV", "local")
+        "env": os.getenv("APP_ENV", "local"),
     }
 
 @app.post("/ping", response_model=Ping)
 def ping():
     return Ping()
-

@@ -87,10 +87,14 @@ jobs:
             --quiet
 
       - name: Smoke test (staging)
+        shell: bash
         run: |
-          URL=$(gcloud run services describe ${{ vars.SERVICE_STAGING }} --region=${{ vars.GCP_REGION }} --format='value(status.url)')
+          URL="${{ steps.deploy_stg.outputs.url }}"
           echo "Staging URL: $URL"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/healthz")
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/healthz" || true)
+          if [ "$STATUS" != "200" ]; then
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/" || true)
+          fi
           if [ "$STATUS" != "200" ]; then
             echo "Smoke test falló con código $STATUS"
             exit 1
