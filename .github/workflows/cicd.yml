@@ -2,7 +2,7 @@ name: CI/CD Cloud Run (staging → prod con aprobación)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 concurrency:
@@ -44,7 +44,7 @@ jobs:
   deploy_staging:
     name: Deploy a STAGING
     runs-on: ubuntu-latest
-    needs: [ build_test ]
+    needs: [build_test]
     environment: staging
     permissions:
       contents: read
@@ -75,19 +75,21 @@ jobs:
             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}
             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:staging
 
+      # >>> Deploy con acción oficial (sin shell)
       - name: Deploy Cloud Run (staging)
-        run: |
-          gcloud run deploy ${{ vars.SERVICE_STAGING }} \
-            --image=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }} \
-            --region=${{ vars.GCP_REGION }} \
-            --platform=managed \
-            --allow-unauthenticated \
-            --port=8080 \
-            --quiet
+        id: deploy_stg
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ vars.SERVICE_STAGING }}
+          image: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}
+          region: ${{ vars.GCP_REGION }}
+          flags: --allow-unauthenticated --port=8080
 
+      # Smoke test usando la URL devuelta por el deploy (sin gcloud)
       - name: Smoke test (staging)
+        shell: bash
         run: |
-          URL=$(gcloud run services describe ${{ vars.SERVICE_STAGING }} --region=${{ vars.GCP_REGION }} --format='value(status.url)')
+          URL="${{ steps.deploy_stg.outputs.url }}"
           echo "Staging URL: $URL"
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/healthz")
           if [ "$STATUS" != "200" ]; then
@@ -98,7 +100,7 @@ jobs:
   deploy_production:
     name: Deploy to PRODUCTION (QA approval required)
     runs-on: ubuntu-latest
-    needs: [ deploy_staging ]
+    needs: [deploy_staging]
     environment:
       name: production
     permissions:
@@ -133,4 +135,4 @@ jobs:
       - name: Write prod URL to summary
         shell: bash
         run: |
-          echo "🚀 Producción: ${{ steps.deploy_prod.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "Producción: ${{ steps.deploy_prod.outputs.url }}" >> $GITHUB_STEP_SUMMARY
