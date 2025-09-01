@@ -1,8 +1,8 @@
-name: CI/CD Cloud Run (staging → prod con aprobación)
+name: "CI/CD Cloud Run (staging to prod with approval)"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 concurrency:
@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Fast API smoke (local)
+      - name: FastAPI smoke (local)
         run: |
           python -c "import fastapi, uvicorn; print('FastAPI:', fastapi.__version__)"
 
@@ -42,9 +42,9 @@ jobs:
           tags: fastapi-demo:ci-${{ github.sha }}
 
   deploy_staging:
-    name: Deploy a STAGING
+    name: Deploy to STAGING
     runs-on: ubuntu-latest
-    needs: [ build_test ]
+    needs: [build_test]
     environment: staging
     permissions:
       contents: read
@@ -60,13 +60,13 @@ jobs:
           service_account: ${{ vars.DEPLOY_SA }}
           project_id: ${{ vars.GCP_PROJECT_ID }}
 
-      - name: Set up gcloud
+      - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker to use gcloud as a credential helper
+      - name: Configure Docker auth helper
         run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
 
-      - name: Build & Push image to Artifact Registry
+      - name: Build & push image to Artifact Registry
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -75,7 +75,6 @@ jobs:
             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}
             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:staging
 
-      # Deploy oficial → nos da la URL
       - name: Deploy Cloud Run (staging)
         id: deploy_stg
         uses: google-github-actions/deploy-cloudrun@v2
@@ -85,7 +84,6 @@ jobs:
           region: ${{ vars.GCP_REGION }}
           flags: --allow-unauthenticated --port=8080
 
-      # Smoke test usando la URL del paso anterior (sin gcloud)
       - name: Smoke test (staging)
         shell: bash
         run: |
@@ -93,14 +91,14 @@ jobs:
           echo "Staging URL: $URL"
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/healthz")
           if [ "$STATUS" != "200" ]; then
-            echo "Smoke test falló con código $STATUS"
+            echo "Smoke test failed with code $STATUS"
             exit 1
           fi
 
   deploy_production:
-    name: Deploy a PRODUCCIÓN (requiere aprobación QA)
+    name: Deploy to PRODUCTION (QA approval required)
     runs-on: ubuntu-latest
-    needs: [ deploy_staging ]
+    needs: [deploy_staging]
     environment:
       name: production
     permissions:
@@ -117,10 +115,10 @@ jobs:
           service_account: ${{ vars.DEPLOY_SA }}
           project_id: ${{ vars.GCP_PROJECT_ID }}
 
-      - name: Set up gcloud
+      - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker
+      - name: Configure Docker auth helper
         run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
 
       - name: Deploy Cloud Run (prod)
@@ -132,5 +130,5 @@ jobs:
           region: ${{ vars.GCP_REGION }}
           flags: --allow-unauthenticated --port=8080
 
-      - name: Anotar URL en summary
-        run: echo "🚀 Producción: ${{ steps.deploy_prod.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+      - name: Write prod URL to summary
+        run: echo "Production: ${{ steps.deploy_prod.outputs.url }}" >> $GITHUB_STEP_SUMMARY
