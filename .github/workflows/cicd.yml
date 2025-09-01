@@ -33,7 +33,6 @@ jobs:
       - name: Fast API smoke (local)
         run: |
           python -c "import fastapi, uvicorn; print('FastAPI:', fastapi.__version__)"
-          # Aquí podrías correr tests (pytest)
 
       - name: Build container (no push)
         uses: docker/build-push-action@v6
@@ -77,14 +76,14 @@ jobs:
             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:staging
 
       - name: Deploy Cloud Run (staging)
-        run: |
-          gcloud run deploy ${{ vars.SERVICE_STAGING }} \
-            --image=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }} \
-            --region=${{ vars.GCP_REGION }} \
-            --platform=managed \
-            --allow-unauthenticated \
-            --port=8080 \
-            --quiet
+        run: >
+          gcloud run deploy "${{ vars.SERVICE_STAGING }}"
+          --image="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}"
+          --region="${{ vars.GCP_REGION }}"
+          --platform=managed
+          --allow-unauthenticated
+          --port=8080
+          --quiet
 
       - name: Smoke test (staging)
         run: |
@@ -101,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ deploy_staging ]
     environment:
-      name: production   # configura reviewers en Settings → Environments
+      name: production
       url: ${{ steps.prod_url.outputs.url }}
     permissions:
       contents: read
@@ -125,14 +124,14 @@ jobs:
 
       - name: Deploy Cloud Run (prod)
         id: deploy_prod
-        run: |
-          gcloud run deploy ${{ vars.SERVICE_PROD }} \
-            --image=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }} \
-            --region=${{ vars.GCP_REGION }} \
-            --platform=managed \
-            --allow-unauthenticated \
-            --port=8080 \
-            --quiet
+        run: >
+          gcloud run deploy "${{ vars.SERVICE_PROD }}"
+          --image="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}"
+          --region="${{ vars.GCP_REGION }}"
+          --platform=managed
+          --allow-unauthenticated
+          --port=8080
+          --quiet
 
       - name: Output prod URL
         id: prod_url
