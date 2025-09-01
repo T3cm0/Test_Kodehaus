@@ -75,8 +75,17 @@ jobs:
             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}
             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:staging
 
+      - name: Echo image tag (debug)
+        run: echo "${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}"
+
+      # ✅ Deploy con la acción oficial (sin shell)
       - name: Deploy Cloud Run (staging)
-        run: gcloud run deploy ${{ vars.SERVICE_STAGING }} --image="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}" --region="${{ vars.GCP_REGION }}" --platform=managed --allow-unauthenticated --port=8080 --quiet
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ vars.SERVICE_STAGING }}
+          image: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}
+          region: ${{ vars.GCP_REGION }}
+          flags: --allow-unauthenticated --port=8080
 
       - name: Smoke test (staging)
         run: |
@@ -115,9 +124,15 @@ jobs:
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
 
+      # ✅ Deploy con la acción oficial (sin shell)
       - name: Deploy Cloud Run (prod)
         id: deploy_prod
-        run: gcloud run deploy ${{ vars.SERVICE_PROD }} --image="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}" --region="${{ vars.GCP_REGION }}" --platform=managed --allow-unauthenticated --port=8080 --quiet
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ vars.SERVICE_PROD }}
+          image: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}
+          region: ${{ vars.GCP_REGION }}
+          flags: --allow-unauthenticated --port=8080
 
       - name: Output prod URL
         id: prod_url
