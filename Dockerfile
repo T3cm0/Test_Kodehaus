@@ -31,4 +31,4 @@ USER appuser
 EXPOSE 8080
 
 # Comando: Uvicorn atado a 0.0.0.0:$PORT
-CMD ["bash", "-lc", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["bash","-lc","uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
