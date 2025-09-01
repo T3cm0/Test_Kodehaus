@@ -131,4 +131,5 @@ jobs:
           flags: --allow-unauthenticated --port=8080
 
       - name: Write prod URL to summary
-        run: echo "Production: ${{ steps.deploy_prod.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+        shell: bash
+        run: echo "Production: ${{ steps.deploy_prod.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
