@@ -77,14 +77,13 @@ jobs:
             ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:staging
 
       - name: Deploy Cloud Run (staging)
-        run: |
-          gcloud run deploy ${{ vars.SERVICE_STAGING }} \
-            --image=${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }} \
-            --region=${{ vars.GCP_REGION }} \
-            --platform=managed \
-            --allow-unauthenticated \
-            --port=8080 \
-            --quiet
+          id: deploy_stg
+          uses: google-github-actions/deploy-cloudrun@v2
+          with:
+            service: ${{ vars.SERVICE_STAGING }}
+            image: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REPO }}/fastapi-demo:${{ github.sha }}
+            region: ${{ vars.GCP_REGION }}
+            flags: --allow-unauthenticated --port=8080
 
       - name: Smoke test (staging)
         shell: bash
